@@ -1,20 +1,61 @@
 import { Box, Text, TextField, Image, Button } from "@skynexui/components";
 import React from "react";
 import appConfig from "./config.json";
+import { useRouter } from 'next/router';
+import { createClient } from '@supabase/supabase-js';
+import { ButtonSendSticker } from '../src/components/ButtonSendSticker';
+
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlhdCI6MTY0MzMwNjcyNiwiZXhwIjoxOTU4ODgyNzI2fQ.BZLTs8snMBE79_85PHqQLkaGn7cRFiwrNBaWAvbHx48';
+const SUPABASE_URL = 'https://icpuixrsmjhdlpzjhylm.supabase.co';
+const supabaseClient = createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+
 
 export default function ChatPage() {
+  const roteamento = useRouter();
+  const usuarioLogado = roteamento.query.username;
+  console.log('usuarioLogado:' + usuarioLogado);
   // Sua lógica vai aqui
   const [mensagem, setMensagem] = React.useState("");
-  const [listaDeMensagem, setListaDeMensagem] = React.useState([]);
+  const [listaDeMensagem, setListaDeMensagem] = React.useState([
+      {
+          id: 1,
+          de: 'Everton',
+          texto: 'sticker: https://www.alura.com.br/imersao-react-4/assets/figurinhas/Figurinha_1.png',
+      }
+  ]);
   // ./Sua lógica vai aqui
+
+  React.useEffect(() => {
+    supabaseClient
+    .from('mensagens')
+    .select('*')
+    .order('id', {ascending:false})
+    .then(({ data }) => {
+        console.log('Dados: ', data);
+        //setListaDeMensagem(data);
+    });
+  }, []);
+
 
   function handleNovaMensagem(novaMensagem) {
     const mensagem = {
-      id: listaDeMensagem.length + 1,
-      de: "everton",
+      //id: listaDeMensagem.length + 1,
+      de: usuarioLogado,
       texto: novaMensagem,
     };
-    setListaDeMensagem([mensagem, ...listaDeMensagem]);
+
+    supabaseClient
+    .from('mensagens')
+    //objeto com o mesmo campo do supabase
+    .insert([
+        mensagem
+    ])
+    .then(({data}) => {
+        console.log('Dados Criando: ', data);
+        setListaDeMensagem([data[0], ...listaDeMensagem]);
+    });
+    
+    //setListaDeMensagem([mensagem, ...listaDeMensagem]);
     setMensagem("");
   }
 
@@ -103,6 +144,7 @@ export default function ChatPage() {
                 color: appConfig.theme.colors.neutrals[200],
               }}
             />
+            <ButtonSendSticker/>
           </Box>
         </Box>
       </Box>
@@ -176,7 +218,7 @@ function MessageList(props) {
                   display: "inline-block",
                   marginRight: "8px",
                 }}
-                src={`https://github.com/evertonpaixao.png`}
+                src={`https://github.com/${mensagem.de}.png`}
               />
               <Text tag="strong">{mensagem.de}</Text>
               <Text
@@ -190,7 +232,17 @@ function MessageList(props) {
                 {new Date().toLocaleDateString()}
               </Text>
             </Box>
-            {mensagem.texto}
+           {/*  Condicional: {mensagem.texto.startsWith('sticker:').toString() */}
+
+            {mensagem.texto.startsWith('sticker:') 
+            ? (
+                <Image src={mensagem.texto.replace('sticker:', '')} />
+            ) 
+            : (
+                mensagem.texto
+            )}
+
+            {/* {mensagem.texto} */}
           </Text>
         );
       })}
