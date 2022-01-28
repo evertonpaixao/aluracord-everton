@@ -144,7 +144,13 @@ export default function ChatPage() {
                 color: appConfig.theme.colors.neutrals[200],
               }}
             />
-            <ButtonSendSticker/>
+            
+            <ButtonSendSticker
+                onStickerClick = {(sticker) => {
+                    console.log('Usando componente. Salva no banco', sticker);
+                    handleNovaMensagem('sticker:' + sticker);
+                }}
+            />
           </Box>
         </Box>
       </Box>
